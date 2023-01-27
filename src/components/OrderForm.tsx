@@ -18,7 +18,6 @@ import { IOrder } from "../interfaces/Orders";
 interface OrderFormProps {
   show: boolean;
   setShow: Setter<boolean>;
-  onPress: (newOrder: IOrder) => void;
   option: string;
   mode: string;
   editSelectedOrder: string;
@@ -27,7 +26,6 @@ interface OrderFormProps {
 const OrderForm = ({
   show,
   setShow,
-  onPress,
   option,
   mode,
   editSelectedOrder,
@@ -36,6 +34,7 @@ const OrderForm = ({
   const [orderType, SetOrderType] = useState<string>("");
 
   async function handleAddOrder() {
+    console.log("test");
     await axios
       .post(
         "https://localhost:5000/api/Order/addOrder",
@@ -47,41 +46,24 @@ const OrderForm = ({
         axiosConfig
       )
       .then(function (response) {
-        if (response.data) {
-          onPress(response.data);
-        }
         SetCustomerName("");
         SetOrderType("");
-      })
-      .catch(function (error) {
-        console.log(error);
       });
     handleClose();
   }
 
   async function handleEditOrder() {
     console.log(editSelectedOrder);
-    await axios
-      .put(
-        `https://localhost:5000/api/Order/updateOrder/${editSelectedOrder}`,
-        {
-          orderId: editSelectedOrder,
-          customerName: customerNameData,
-          type: orderType,
-        },
-        axiosConfig
-      )
-      .then(function (response) {
-        if (response.data) {
-          onPress(response.data);
-        }
-        SetCustomerName("");
-        SetOrderType("");
-        handleClose();
-      })
-      .catch(function (error) {
-        console.log(error);
-      });
+    await axios.put(
+      `https://localhost:5000/api/Order/updateOrder/${editSelectedOrder}`,
+      {
+        orderId: editSelectedOrder,
+        customerName: customerNameData,
+        type: orderType,
+      },
+      axiosConfig
+    );
+
     handleClose();
   }
 

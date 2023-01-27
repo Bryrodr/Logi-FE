@@ -12,7 +12,7 @@ import OrderForm from "../components/OrderForm";
 import OrderGrid from "../components/OrderGrid";
 import { IOrder } from "../interfaces/Orders";
 import { axiosConfig, orderTypes } from "../constants/constants";
-
+import { HubConnectionBuilder } from "@microsoft/signalr";
 import axios from "axios";
 import { queryOrders } from "../api/querydata";
 
@@ -26,10 +26,44 @@ const CrudBar = () => {
   const [editSelectedOrderId, setEditSelectedOrderId] = useState<string>("");
 
   useEffect(() => {
-    async function ahhh() {
+    const connection = new HubConnectionBuilder()
+      .withUrl("https://localhost:5000/ordersHub")
+      .withAutomaticReconnect()
+      .build();
+
+    connection.start().then((result) => {
+      connection.on("receiveOrder", (order) => {
+        handleSnip(order);
+        setOrdersData((current) => [...current, order]);
+      });
+
+      connection.on("receiveEdit", (order) => {
+        order = handleSnip(order);
+        setOrdersData((current) => {
+          return current.map((currentOrder) => {
+            if (currentOrder.orderId === order.orderId) {
+              return order;
+            }
+            return currentOrder;
+          });
+        });
+      }); //receiveEdit
+
+      connection.on("receiveDelete", (order) => {
+        setOrdersData((current) => {
+          return current.filter((currentOrder) => {
+            return currentOrder.orderId !== order.orderId;
+          });
+        });
+      }); //receiveDelete
+    });
+  }, []);
+
+  useEffect(() => {
+    async function LoginQuery() {
       setOrdersData(await queryOrders());
     }
-    ahhh();
+    LoginQuery();
   }, []);
 
   const handleOrderTypeFilterChange = (event: SelectChangeEvent) => {
@@ -43,21 +77,10 @@ const CrudBar = () => {
   function handleDeleteOrder() {
     //fix with promises
     selectedOrderIds.forEach((element) => {
-      axios
-        .delete(
-          `https://localhost:5000/api/Order/deleteOrder/${element}`,
-          axiosConfig
-        )
-        .then((response) => {
-          setOrdersData(
-            ordersData.filter((order) => {
-              return order.orderId !== element;
-            })
-          );
-        })
-        .catch((error) => {
-          console.log(error);
-        });
+      axios.delete(
+        `https://localhost:5000/api/Order/deleteOrder/${element}`,
+        axiosConfig
+      );
     });
 
     setSelectedOrderIds([]);
@@ -67,23 +90,6 @@ const CrudBar = () => {
     order.type = orderTypes[parseInt(order.type)];
     order.createdDate = order.createdDate.split("T")[0];
     return order;
-  };
-
-  const handleCreate = (newOrder: IOrder) => {
-    newOrder = handleSnip(newOrder);
-    setOrdersData((current) => [...current, newOrder]);
-  };
-
-  const handleEdit = (editedOrder: IOrder) => {
-    editedOrder = handleSnip(editedOrder);
-    setOrdersData(
-      ordersData.map((order) => {
-        if (order.orderId === editedOrder.orderId) {
-          return editedOrder;
-        }
-        return order;
-      })
-    );
   };
 
   const createClicked = () => {
@@ -176,7 +182,6 @@ const CrudBar = () => {
         editSelectedOrder={editSelectedOrderId}
         show={open}
         setShow={setOpen}
-        onPress={mode === "Create" ? handleCreate : handleEdit}
         option={mode === "Create" ? "Add Order" : "Save Changes"}
         mode={mode}
       />

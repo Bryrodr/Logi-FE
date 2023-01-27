@@ -1,24 +1,34 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from "react";
+import "./App.css";
+
+import { Routes, Route } from "react-router-dom";
+
+import Login from "./screens/Login";
+import DashBoard from "./screens/DashBoard";
+import SignUp from "./screens/SignUp";
+import ForgotPassword from "./screens/ForgotPassword";
+
+import VerifyCode from "./screens/VerifyCode";
+import ResetPassword from "./screens/ResetPassword";
 
 function App() {
+  const [authenticated, setAuthenticated] = useState(false);
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <Routes>
+        {!authenticated ? (
+          <Route
+            path="/"
+            element={<Login setAuthenticated={setAuthenticated} />}
+          />
+        ) : (
+          <Route path="/" element={<DashBoard />} />
+        )}
+        <Route path="signup" element={<SignUp />} />
+        <Route path="forgotpassword" element={<ForgotPassword />} />
+        <Route path="otp" element={<VerifyCode />} />
+        <Route path="resetpassword" element={<ResetPassword />}></Route>
+      </Routes>
     </div>
   );
 }
